@@ -87,3 +87,26 @@ EXPORT_FUNCTIONS do_compile do_install
 KERNEL_MODULES_META_PACKAGE = "${PN}"
 FILES:${PN} = ""
 ALLOW_EMPTY:${PN} = "1"
+
+# Rust module support
+DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', 'rust-native', '', d)}"
+
+RUST_DEBUG_REMAP = "${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', '--remap-path-prefix=${WORKDIR}=${TARGET_DBGSRC_DIR} \
+                      --remap-path-prefix=${TMPDIR}/work-shared=${TARGET_DBGSRC_DIR}', '',d)}"
+KRUSTFLAGS:append = " ${RUST_DEBUG_REMAP}"
+EXTRA_OEMAKE:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', ' KRUSTFLAGS="${KRUSTFLAGS}"', '',d)}"
+
+do_copy_rust() {
+    if [ ! -d ${STAGING_DIR_NATIVE}/usr/lib/rustlib/src/rust ]; then
+            mkdir -p ${STAGING_DIR_NATIVE}/usr/lib/rustlib/src/rust/
+            cp -r ${TMPDIR}/work-shared/rust ${STAGING_DIR_NATIVE}/usr/lib/rustlib/src/.
+    fi
+}
+
+python __anonymous () {
+    if oe.utils.all_distro_features(d, "rust-kernel"):
+        bb.build.addtask('do_copy_rust', 'do_compile', 'do_prepare_recipe_sysroot', d)
+}
+
+# TODO: Rust out-of-tree *-src pkg are wrong (only contains .mod.c files instead
+#       of the .rs files)
