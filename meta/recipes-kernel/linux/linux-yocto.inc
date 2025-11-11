@@ -79,6 +79,7 @@ do_patch:append(){
                fi
         fi
 }
+do_patch[depends] += "rust-native:do_rust_setup_snapshot"
 
 # enable kernel-sample for oeqa/runtime/cases's ksample.py test
 KERNEL_FEATURES:append:qemuall = " features/kernel-sample/kernel-sample.scc"
