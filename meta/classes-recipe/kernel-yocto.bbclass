@@ -34,6 +34,13 @@ RUST_DEBUG_REMAP = "${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', '--re
 KRUSTFLAGS:append = " ${RUST_DEBUG_REMAP}"
 EXTRA_OEMAKE:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', ' KRUSTFLAGS="${KRUSTFLAGS}"', '',d)}"
 
+# Linux rust build infrastructure does not currently support ccache
+# see https://github.com/Rust-for-Linux/linux/issues/1224
+# Quick summary: There are 2 issues: $HOSTCC is not escaped and rustc expect a path (and not a command)
+# More details in: https://lists.openembedded.org/g/openembedded-core/message/229336
+# Disable ccache for kernel build if rust-kernel is enabled to work around this.
+CCACHE_DISABLE ?= "${@bb.utils.contains('DISTRO_FEATURES', 'rust-kernel', '1', '0', d)}"
+
 # returns local (absolute) path names for all valid patches in the
 # src_uri
 def find_patches(d,subdir):
